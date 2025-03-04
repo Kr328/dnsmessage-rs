@@ -125,18 +125,18 @@ fn test_parse() {
 
     let mut questions = pkt.questions();
     let question = questions.next().unwrap().unwrap();
-    assert_eq!(question.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(question.name).unwrap(), "www.example.org.");
     assert_eq!(question.typ, dnsmessage::Type::AAAA.into());
     assert_eq!(question.class, dnsmessage::Class::INET.into());
     let question = questions.next().unwrap().unwrap();
-    assert_eq!(question.name.to_string().unwrap(), "example.org.");
+    assert_eq!(TryInto::<String>::try_into(question.name).unwrap(), "example.org.");
     assert_eq!(question.typ, dnsmessage::Type::AAAA.into());
     assert_eq!(question.class, dnsmessage::Class::INET.into());
     assert!(questions.next().is_none());
 
     let mut answers = pkt.answers();
     let answer = answers.next().unwrap().unwrap();
-    assert_eq!(answer.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(answer.name).unwrap(), "www.example.org.");
     assert_eq!(answer.class, dnsmessage::Class::INET.into());
     assert_eq!(answer.ttl, 255);
     assert_eq!(
@@ -146,7 +146,7 @@ fn test_parse() {
         }
     );
     let answer = answers.next().unwrap().unwrap();
-    assert_eq!(answer.name.to_string().unwrap(), "example.org.");
+    assert_eq!(TryInto::<String>::try_into(answer.name).unwrap(), "example.org.");
     assert_eq!(answer.class, dnsmessage::Class::INET.into());
     assert_eq!(answer.ttl, 255);
     assert_eq!(
@@ -156,7 +156,7 @@ fn test_parse() {
         }
     );
     let answer = answers.next().unwrap().unwrap();
-    assert_eq!(answer.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(answer.name).unwrap(), "www.example.org.");
     assert_eq!(answer.class, dnsmessage::Class::INET.into());
     assert_eq!(answer.ttl, 255);
     assert_eq!(
@@ -166,11 +166,11 @@ fn test_parse() {
         }
     );
     let answer = answers.next().unwrap().unwrap();
-    assert_eq!(answer.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(answer.name).unwrap(), "www.example.org.");
     assert_eq!(answer.class, dnsmessage::Class::INET.into());
     assert_eq!(answer.ttl, 255);
     assert_eq!(
-        answer.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        answer.data.clone().try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::CNAME {
             cname: Cow::Borrowed("example.org.")
         }
@@ -179,11 +179,11 @@ fn test_parse() {
 
     let mut authorities = pkt.authorities();
     let authority = authorities.next().unwrap().unwrap();
-    assert_eq!(authority.name.to_string().unwrap(), "example.org.");
+    assert_eq!(TryInto::<String>::try_into(authority.name).unwrap(), "example.org.");
     assert_eq!(authority.class, dnsmessage::Class::INET.into());
     assert_eq!(authority.ttl, 255);
     assert_eq!(
-        authority.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        authority.data.clone().try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::NS {
             ns: Cow::Borrowed("ns.example.org.")
         }
@@ -191,21 +191,21 @@ fn test_parse() {
 
     let mut additionals = pkt.additionals();
     let additional = additionals.next().unwrap().unwrap();
-    assert_eq!(additional.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(additional.name).unwrap(), "www.example.org.");
     assert_eq!(additional.class, dnsmessage::Class::INET.into());
     assert_eq!(additional.ttl, 255);
     assert_eq!(
-        additional.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        additional.data.clone().try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::A {
             a: Ipv4Addr::from([1u8, 2, 3, 4])
         }
     );
     let additional = additionals.next().unwrap().unwrap();
-    assert_eq!(additional.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(additional.name).unwrap(), "www.example.org.");
     assert_eq!(additional.class, dnsmessage::Class::INET.into());
     assert_eq!(additional.ttl, 255);
     assert_eq!(
-        additional.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        additional.data.clone().try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::SOA {
             ns: Cow::Borrowed("ns.example.org."),
             mbox: Cow::Borrowed("example.org."),
@@ -217,42 +217,42 @@ fn test_parse() {
         }
     );
     let additional = additionals.next().unwrap().unwrap();
-    assert_eq!(additional.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(additional.name).unwrap(), "www.example.org.");
     assert_eq!(additional.class, dnsmessage::Class::INET.into());
     assert_eq!(additional.ttl, 255);
     assert_eq!(
-        additional.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        additional.data.try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::PTR {
             ptr: Cow::Borrowed("ptr.example.org."),
         }
     );
     let additional = additionals.next().unwrap().unwrap();
-    assert_eq!(additional.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(additional.name).unwrap(), "www.example.org.");
     assert_eq!(additional.class, dnsmessage::Class::INET.into());
     assert_eq!(additional.ttl, 255);
     assert_eq!(
-        additional.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        additional.data.try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::MX {
             preference: 8,
             mx: Cow::Borrowed("mx.example.org."),
         }
     );
     let additional = additionals.next().unwrap().unwrap();
-    assert_eq!(additional.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(additional.name).unwrap(), "www.example.org.");
     assert_eq!(additional.class, dnsmessage::Class::INET.into());
     assert_eq!(additional.ttl, 255);
     assert_eq!(
-        additional.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        additional.data.try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::TXT {
             txt: vec![Cow::Borrowed(&b"114514"[..]), Cow::Borrowed(&b"1919810"[..])],
         }
     );
     let additional = additionals.next().unwrap().unwrap();
-    assert_eq!(additional.name.to_string().unwrap(), "www.example.org.");
+    assert_eq!(TryInto::<String>::try_into(additional.name).unwrap(), "www.example.org.");
     assert_eq!(additional.class, dnsmessage::Class::INET.into());
     assert_eq!(additional.ttl, 255);
     assert_eq!(
-        additional.data.try_to_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
+        additional.data.try_into_owned::<Cow<str>, Cow<[u8]>>().unwrap(),
         dnsmessage::ResourceData::SRV {
             priority: 9,
             weight: 10,

@@ -191,12 +191,21 @@ impl<'a> NameVisitor<'a> {
             try_load_segment(self.packet, &mut offset, &mut ptr_count).transpose()
         })
     }
+}
 
-    pub fn to_string(&self) -> Result<String, Error> {
+impl TryInto<String> for &'_ NameVisitor<'_> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<String, Self::Error> {
         let mut s = String::with_capacity(48);
 
         for segment in self.segments() {
-            s.push_str(std::str::from_utf8(segment?).map_err(|_| Error::InvalidNameSegmentBody)?);
+            let segment = segment?;
+            if segment.contains(&b'.') {
+                return Err(Error::InvalidNameSegmentBody);
+            }
+
+            s.push_str(std::str::from_utf8(segment).map_err(|_| Error::InvalidNameSegmentBody)?);
             s.push('.');
         }
 
@@ -208,9 +217,17 @@ impl<'a> NameVisitor<'a> {
     }
 }
 
+impl TryInto<String> for NameVisitor<'_> {
+    type Error = Error;
+
+    fn try_into(self) -> Result<String, Self::Error> {
+        (&self).try_into()
+    }
+}
+
 impl Debug for NameVisitor<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = self.to_string().map(Cow::Owned).unwrap_or(Cow::Borrowed("<invalid>"));
+        let s = self.try_into().map(Cow::Owned).unwrap_or(Cow::Borrowed("<invalid>"));
 
         f.debug_struct("Name").field("s", &s).field("offset", &self.offset).finish()
     }

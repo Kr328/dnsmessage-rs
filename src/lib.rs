@@ -104,6 +104,14 @@ impl<T: TryFromPrimitive + Into<T::Primitive>> MaybeUnknown<T> {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum EitherError<L, R> {
+    #[error("{0}")]
+    Left(L),
+    #[error("{0}")]
+    Right(R),
+}
+
 #[repr(u16)]
 #[derive(Debug, Copy, Clone, PartialEq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
 pub enum Type {
@@ -139,6 +147,16 @@ pub struct Question<N> {
     pub name: N,
     pub typ: MaybeUnknown<Type>,
     pub class: MaybeUnknown<Class>,
+}
+
+impl<N: TryInto<String>> Question<N> {
+    pub fn try_into_owned<RN: From<String>>(self) -> Result<Question<RN>, N::Error> {
+        Ok(Question {
+            name: RN::from(self.name.try_into()?),
+            typ: self.typ,
+            class: self.class,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Hash)]
@@ -186,23 +204,21 @@ pub enum ResourceData<N, D> {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
-pub struct Resource<N, D> {
-    pub name: N,
-    pub class: MaybeUnknown<Class>,
-    pub ttl: u32,
-    pub data: ResourceData<N, D>,
-}
-
-impl<'a> ResourceData<NameVisitor<'a>, &'a [u8]> {
-    pub fn try_to_owned<N: From<String>, D: From<Vec<u8>>>(&self) -> Result<ResourceData<N, D>, Error> {
+impl<N, D> ResourceData<N, D>
+where
+    N: TryInto<String>,
+    D: TryInto<Vec<u8>>,
+{
+    pub fn try_into_owned<RN: From<String>, RD: From<Vec<u8>>>(
+        self,
+    ) -> Result<ResourceData<RN, RD>, EitherError<N::Error, D::Error>> {
         let data = match self {
-            ResourceData::A { a } => ResourceData::A { a: *a },
+            ResourceData::A { a } => ResourceData::A { a },
             ResourceData::NS { ns } => ResourceData::NS {
-                ns: N::from(ns.to_string()?),
+                ns: RN::from(ns.try_into().map_err(|err| EitherError::Left(err))?),
             },
             ResourceData::CNAME { cname } => ResourceData::CNAME {
-                cname: N::from(cname.to_string()?),
+                cname: RN::from(cname.try_into().map_err(|err| EitherError::Left(err))?),
             },
             ResourceData::SOA {
                 ns,
@@ -213,42 +229,73 @@ impl<'a> ResourceData<NameVisitor<'a>, &'a [u8]> {
                 expire,
                 min_ttl,
             } => ResourceData::SOA {
-                ns: N::from(ns.to_string()?),
-                mbox: N::from(mbox.to_string()?),
-                serial: *serial,
-                refresh: *refresh,
-                retry: *retry,
-                expire: *expire,
-                min_ttl: *min_ttl,
+                ns: RN::from(ns.try_into().map_err(|err| EitherError::Left(err))?),
+                mbox: RN::from(mbox.try_into().map_err(|err| EitherError::Left(err))?),
+                serial,
+                refresh,
+                retry,
+                expire,
+                min_ttl,
             },
             ResourceData::PTR { ptr } => ResourceData::PTR {
-                ptr: N::from(ptr.to_string()?),
+                ptr: RN::from(ptr.try_into().map_err(|err| EitherError::Left(err))?),
             },
             ResourceData::MX { preference, mx } => ResourceData::MX {
-                preference: *preference,
-                mx: N::from(mx.to_string()?),
+                preference,
+                mx: RN::from(mx.try_into().map_err(|err| EitherError::Left(err))?),
             },
-            ResourceData::TXT { txt } => ResourceData::TXT {
-                txt: txt.iter().map(|v| D::from(v.to_vec())).collect(),
-            },
-            ResourceData::AAAA { aaaa } => ResourceData::AAAA { aaaa: *aaaa },
+            ResourceData::TXT { txt } => {
+                let mut new_txt = Vec::with_capacity(txt.len());
+
+                for t in txt {
+                    new_txt.push(RD::from(t.try_into().map_err(|err| EitherError::Right(err))?));
+                }
+
+                ResourceData::TXT { txt: new_txt }
+            }
+            ResourceData::AAAA { aaaa } => ResourceData::AAAA { aaaa },
             ResourceData::SRV {
                 priority,
                 weight,
                 port,
                 target,
             } => ResourceData::SRV {
-                priority: *priority,
-                weight: *weight,
-                port: *port,
-                target: N::from(target.to_string()?),
+                priority,
+                weight,
+                port,
+                target: RN::from(target.try_into().map_err(|err| EitherError::Left(err))?),
             },
             ResourceData::Unknown { typ, data } => ResourceData::Unknown {
-                typ: *typ,
-                data: D::from(data.to_vec()),
+                typ,
+                data: RD::from(data.try_into().map_err(|err| EitherError::Right(err))?),
             },
         };
 
         Ok(data)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Hash)]
+pub struct Resource<N, D> {
+    pub name: N,
+    pub class: MaybeUnknown<Class>,
+    pub ttl: u32,
+    pub data: ResourceData<N, D>,
+}
+
+impl<N, D> Resource<N, D>
+where
+    N: TryInto<String>,
+    D: TryInto<Vec<u8>>,
+{
+    pub fn try_into_owned<RN: From<String>, RD: From<Vec<u8>>>(
+        self,
+    ) -> Result<Resource<RN, RD>, EitherError<N::Error, D::Error>> {
+        Ok(Resource {
+            name: RN::from(self.name.try_into().map_err(|err| EitherError::Left(err))?),
+            class: self.class,
+            ttl: self.ttl,
+            data: self.data.try_into_owned()?,
+        })
     }
 }
