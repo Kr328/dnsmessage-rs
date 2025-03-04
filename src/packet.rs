@@ -2,6 +2,7 @@ use std::{
     borrow::Cow,
     fmt::Debug,
     net::{Ipv4Addr, Ipv6Addr},
+    ops::Deref,
 };
 
 use crate::{Class, Error, Header, HeaderFlags, MaybeUnknown, Question, Resource, ResourceData, Type};
@@ -218,6 +219,14 @@ impl Debug for NameVisitor<'_> {
 pub struct Packet<B> {
     packet: B,
     sections: Sections,
+}
+
+impl<B> Deref for Packet<B> {
+    type Target = B;
+
+    fn deref(&self) -> &Self::Target {
+        &self.packet
+    }
 }
 
 impl<B> Packet<B> {
