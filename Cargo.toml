@@ -1,0 +1,12 @@
+[package]
+name = "dnsmessage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+thiserror = "2.0"
+bitflags = "2.9"
+num_enum = "0.7"
+
+[dev-dependencies]
+simple-dns = "0.10"
