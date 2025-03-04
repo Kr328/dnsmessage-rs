@@ -524,11 +524,16 @@ impl<'a> QuestionsCursor<'a> {
         Ok(question)
     }
 
-    pub fn set(&mut self, typ: MaybeUnknown<Type>, class: MaybeUnknown<Class>) -> Result<(), Error> {
-        let mut offset = skip_name(self.packet, self.cursor.pos()?)?;
+    pub fn set_type(&mut self, typ: MaybeUnknown<Type>) -> Result<(), Error> {
+        let offset = skip_name(self.packet, self.cursor.pos()?)?;
 
         store_bytes(self.packet, offset, typ.into().to_be_bytes())?;
-        offset += 2;
+
+        Ok(())
+    }
+
+    pub fn set_class(&mut self, class: MaybeUnknown<Class>) -> Result<(), Error> {
+        let offset = skip_name(self.packet, self.cursor.pos()?)? + 2;
 
         store_bytes(self.packet, offset, class.into().to_be_bytes())?;
 
@@ -552,12 +557,19 @@ impl<'a> ResourcesCursor<'a> {
         Ok(resource)
     }
 
-    pub fn set(&mut self, class: MaybeUnknown<Class>, ttl: u32) -> Result<(), Error> {
+    pub fn set_class(&mut self, class: MaybeUnknown<Class>) -> Result<(), Error> {
         let mut offset = skip_name(self.packet, self.cursor.pos()?)?;
         offset += 2; // Type
 
         store_bytes(self.packet, offset, class.into().to_be_bytes())?;
-        offset += 2;
+
+        Ok(())
+    }
+
+    pub fn set_ttl(&mut self, ttl: u32) -> Result<(), Error> {
+        let mut offset = skip_name(self.packet, self.cursor.pos()?)?;
+        offset += 2; // Type
+        offset += 2; // Class
 
         store_bytes(self.packet, offset, ttl.to_be_bytes())?;
 
