@@ -46,9 +46,7 @@ fn test_modify() {
 
     let mut answers_cursor = pkt.answers_cursor();
     while let Ok(true) = answers_cursor.next() {
-        let res = answers_cursor.resource().unwrap();
-
-        answers_cursor.set(res.class, 1).unwrap();
+        answers_cursor.set_ttl(1).unwrap();
     }
 
     let pkt = dnsmessage::Packet::new(pkt.into_inner()).unwrap();
