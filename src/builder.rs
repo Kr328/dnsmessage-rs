@@ -57,11 +57,12 @@ impl<W: Write + Seek, P> Builder<W, P> {
         Ok(())
     }
 
-    fn pack_name(&mut self, name: &[u8]) -> Result<(), Error> {
-        if name == b"." {
+    fn pack_name(&mut self, name: &str) -> Result<(), Error> {
+        if name == "." {
             return Ok(self.write(&[0])?);
         }
 
+        let name = name.as_bytes();
         if name.last().copied() != Some(b'.') {
             return Err(Error::NonCanonicalName);
         }
@@ -100,7 +101,7 @@ impl<W: Write + Seek, P> Builder<W, P> {
         Ok(())
     }
 
-    fn pack_question<N: AsRef<[u8]>>(&mut self, question: &Question<N>) -> Result<(), Error> {
+    fn pack_question<N: AsRef<str>>(&mut self, question: &Question<N>) -> Result<(), Error> {
         self.pack_name(question.name.as_ref())?;
         self.write(&question.typ.into().to_be_bytes())?;
         self.write(&question.class.into().to_be_bytes())?;
@@ -108,7 +109,7 @@ impl<W: Write + Seek, P> Builder<W, P> {
         Ok(())
     }
 
-    fn pack_resource<N: AsRef<[u8]>, D: AsRef<[u8]>>(&mut self, resource: &Resource<N, D>) -> Result<(), Error> {
+    fn pack_resource<N: AsRef<str>, D: AsRef<[u8]>>(&mut self, resource: &Resource<N, D>) -> Result<(), Error> {
         let typ = match &resource.data {
             ResourceData::CNAME { .. } => MaybeUnknown::Known(Type::CNAME),
             ResourceData::MX { .. } => MaybeUnknown::Known(Type::MX),
@@ -238,7 +239,7 @@ impl<W: Write + Seek> Builder<W, WantsHeader> {
 }
 
 impl<W: Write + Seek> Builder<W, WantsQuestions> {
-    pub fn write_question<N: AsRef<[u8]>>(mut self, question: &Question<N>) -> Result<Self, Error> {
+    pub fn write_question<N: AsRef<str>>(mut self, question: &Question<N>) -> Result<Self, Error> {
         self.pack_question(question)?;
 
         self.questions += 1;
@@ -254,7 +255,7 @@ impl<W: Write + Seek> Builder<W, WantsQuestions> {
 }
 
 impl<W: Write + Seek> Builder<W, WantsAnswers> {
-    pub fn write_answer<N: AsRef<[u8]>, D: AsRef<[u8]>>(mut self, answer: &Resource<N, D>) -> Result<Self, Error> {
+    pub fn write_answer<N: AsRef<str>, D: AsRef<[u8]>>(mut self, answer: &Resource<N, D>) -> Result<Self, Error> {
         self.pack_resource(answer)?;
 
         self.answers += 1;
@@ -270,7 +271,7 @@ impl<W: Write + Seek> Builder<W, WantsAnswers> {
 }
 
 impl<W: Write + Seek> Builder<W, WantsAuthorities> {
-    pub fn write_authority<N: AsRef<[u8]>, D: AsRef<[u8]>>(mut self, authority: &Resource<N, D>) -> Result<Self, Error> {
+    pub fn write_authority<N: AsRef<str>, D: AsRef<[u8]>>(mut self, authority: &Resource<N, D>) -> Result<Self, Error> {
         self.pack_resource(authority)?;
 
         self.authorities += 1;
@@ -286,7 +287,7 @@ impl<W: Write + Seek> Builder<W, WantsAuthorities> {
 }
 
 impl<W: Write + Seek> Builder<W, WantsAdditionals> {
-    pub fn write_additional<N: AsRef<[u8]>, D: AsRef<[u8]>>(mut self, additional: &Resource<N, D>) -> Result<Self, Error> {
+    pub fn write_additional<N: AsRef<str>, D: AsRef<[u8]>>(mut self, additional: &Resource<N, D>) -> Result<Self, Error> {
         self.pack_resource(additional)?;
 
         self.additionals += 1;
