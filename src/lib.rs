@@ -44,7 +44,7 @@ pub enum Error {
 }
 
 bitflags::bitflags! {
-    #[derive(Debug, Copy, Clone, PartialEq, Hash)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
     pub struct HeaderFlags: u16 {
         const AUTHORITATIVE = 1 << 10;
         const TRUNCATED = 1 << 9;
@@ -57,7 +57,7 @@ bitflags::bitflags! {
 }
 
 #[repr(u16)]
-#[derive(Debug, Copy, Clone, PartialEq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
 pub enum RCode {
     Success = 0,
     FormatError = 1,
@@ -67,7 +67,7 @@ pub enum RCode {
     Refused = 5,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Header {
     pub id: u16,
     pub resp: bool,
@@ -76,7 +76,7 @@ pub struct Header {
     pub flags: HeaderFlags,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum MaybeUnknown<T: TryFromPrimitive + Into<T::Primitive>> {
     Known(T),
     Unknown(T::Primitive),
@@ -113,7 +113,7 @@ pub enum EitherError<L, R> {
 }
 
 #[repr(u16)]
-#[derive(Debug, Copy, Clone, PartialEq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
 pub enum Type {
     A = 1,
     NS = 2,
@@ -133,7 +133,7 @@ pub enum Type {
 }
 
 #[repr(u16)]
-#[derive(Debug, Copy, Clone, PartialEq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, num_enum::IntoPrimitive, num_enum::TryFromPrimitive)]
 pub enum Class {
     INET = 1,
     CSNET = 2,
@@ -142,7 +142,7 @@ pub enum Class {
     ANY = 255,
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Question<N> {
     pub name: N,
     pub typ: MaybeUnknown<Type>,
@@ -159,7 +159,7 @@ impl<N: TryInto<String>> Question<N> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ResourceData<N, D> {
     A {
         a: Ipv4Addr,
@@ -275,7 +275,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Resource<N, D> {
     pub name: N,
     pub class: MaybeUnknown<Class>,

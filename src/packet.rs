@@ -135,7 +135,7 @@ fn collect_sections(packet: &[u8]) -> Result<(Sections, usize), Error> {
     ))
 }
 
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct NameVisitor<'a> {
     packet: &'a [u8],
     offset: usize,
