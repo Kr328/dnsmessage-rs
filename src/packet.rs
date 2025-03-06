@@ -279,6 +279,13 @@ impl<B> Packet<B> {
     pub fn into_inner(self) -> B {
         self.packet
     }
+
+    pub fn map_inner<RB: From<B>>(self) -> Packet<RB> {
+        Packet {
+            packet: RB::from(self.packet),
+            sections: self.sections,
+        }
+    }
 }
 
 fn parse_question(packet: &[u8], mut offset: usize) -> Result<(Question<NameVisitor>, usize), Error> {
