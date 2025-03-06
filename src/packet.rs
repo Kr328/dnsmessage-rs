@@ -74,6 +74,7 @@ fn skip_resource(packet: &[u8], mut offset: usize) -> Result<usize, Error> {
     Ok(offset)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Sections {
     questions: u16,
     questions_offset: usize,
@@ -233,6 +234,7 @@ impl Debug for NameVisitor<'_> {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Packet<B> {
     packet: B,
     sections: Sections,
@@ -249,6 +251,7 @@ impl<B> Deref for Packet<B> {
 impl<B: AsRef<[u8]>> Debug for Packet<B> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Packet")
+            .field("sections", &self.sections)
             .field("header", &self.header())
             .field("questions", &self.questions().collect::<Vec<_>>())
             .field("answers", &self.answers().collect::<Vec<_>>())
