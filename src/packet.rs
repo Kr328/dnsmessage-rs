@@ -246,6 +246,18 @@ impl<B> Deref for Packet<B> {
     }
 }
 
+impl<B: AsRef<[u8]>> Debug for Packet<B> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Packet")
+            .field("header", &self.header())
+            .field("questions", &self.questions().collect::<Vec<_>>())
+            .field("answers", &self.answers().collect::<Vec<_>>())
+            .field("authorities", &self.authorities().collect::<Vec<_>>())
+            .field("additionals", &self.additionals().collect::<Vec<_>>())
+            .finish()
+    }
+}
+
 impl<B> Packet<B> {
     pub fn new(packet: B) -> Result<Self, Error>
     where
